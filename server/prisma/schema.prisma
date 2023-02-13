@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(cuid()) @db.Char(25)
+  email           String            @unique
+  name            String?
+  role            Role              @default(USER)
+  posts           Post[]
+  profile         Profile?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt()
+  PostLike        PostLike[]
+  PostComment     PostComment[]
+  PostCommentLike PostCommentLike[]
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Profile {
+  id     String @id @default(cuid()) @db.Char(25)
+  bio    String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+
+  @@map("profiles")
+}
+
+model Post {
+  id          String         @id @default(cuid()) @db.Char(25)
+  title       String
+  published   Boolean        @default(false)
+  author      User           @relation(fields: [authorId], references: [id])
+  authorId    String
+  categories  PostCategory[]
+  createdAt   DateTime       @default(now())
+  PostLike    PostLike[]
+  PostComment PostComment[]
+  PostTag     PostTag[]
+
+  @@map("posts")
+}
+
+model PostCategory {
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id])
+  categoryId String
+  categoriy  Category @relation(fields: [categoryId], references: [id])
+
+  @@id([postId, categoryId])
+  @@map("post_categories")
+}
+
+model Category {
+  id   String         @id @default(cuid()) @db.Char(25)
+  name String
+  post PostCategory[]
+
+  @@map("categories")
+}
+
+model PostTag {
+  postId String
+  post   Post   @relation(fields: [postId], references: [id])
+  tagId  String
+  tag    Tag    @relation(fields: [tagId], references: [id])
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model Tag {
+  id       String    @id @default(cuid()) @db.Char(25)
+  parentId String?
+  name     String
+  iconPath String?
+  post     PostTag[]
+  parentIs Tag?      @relation("TagChildOf", fields: [parentId], references: [id])
+  hasChild Tag[]     @relation("TagChildOf")
+
+  @@map("tags")
+}
+
+model PostLike {
+  id        String   @id @default(cuid()) @db.Char(25)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("post_likes")
+}
+
+model PostComment {
+  id              String            @id @default(cuid()) @db.Char(25)
+  postId          String
+  post            Post              @relation(fields: [postId], references: [id])
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  createdAt       DateTime          @default(now())
+  PostCommentLike PostCommentLike[]
+
+  @@map("post_comments")
+}
+
+model PostCommentLike {
+  id            String      @id @default(cuid()) @db.Char(25)
+  userId        String
+  postCommentId String
+  createdAt     DateTime    @default(now())
+  postComment   PostComment @relation(fields: [postCommentId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@map("post_comment_likes")
+}
