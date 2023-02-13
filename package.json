@@ -11,6 +11,7 @@
     "node": ">=16.0.0 <17.0.0"
   },
   "scripts": {
+    "start": "concurrently \"npm --prefix ./client run dev\" \"npm --prefix ./server run dev\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/vinh466/socialfly/issues"
   },
-  "homepage": "https://github.com/vinh466/socialfly#readme"
+  "homepage": "https://github.com/vinh466/socialfly#readme",
+  "dependencies": {
+    "concurrently": "^7.6.0"
+  }
 }
