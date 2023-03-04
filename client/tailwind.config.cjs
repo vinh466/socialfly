@@ -9,7 +9,7 @@ module.exports = {
   darkMode: ['class', '[data-mode="dark"]'],
   theme: {
     screens: {
-      sm: '480px',
+      // sm: '480px',
       md: '768px',
       lg: '976px',
       xl: '1440px',
@@ -27,7 +27,7 @@ module.exports = {
       borderRadius: {
         '4xl': '2rem',
       }
-    }
+    },
   },
   plugins: [
   ],
