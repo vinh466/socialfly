@@ -1,13 +1,13 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, redirect } from "react-router-dom";
 import Main from "@/views/layouts/Main.layout";
 import None from "@/views/layouts/None.layout";
 import ErrorPage from "@/views/ErrorPage";
-import Chat from "@/views/Chat";
+import Chat from "@/views/chat/Chat";
 import Feed from '@/views/Feed';
-import Friend from '@/views/Friend';
+import Friend from '@/views/friend/Friend';
 import Profile from '@/views/Profile';
-import Login from "@/views/auth/Login";
-import Register from "@/views/auth/Register";
+import Auth from "@/views/auth/Auth";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 
 const router = createBrowserRouter([
@@ -17,36 +17,42 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/login",
-        element: <Login />,
+        element: <Auth />,
+
       },
       {
         path: "/register",
-        element: <Register />,
+        element: <Auth />,
       },
     ],
   },
   {
-    element: <Main />,
+    element: <ProtectedRoute />,
     children: [
       {
-        path: "/",
-        element: <Feed />,
-      },
-      {
-        path: "/feed",
-        element: <Feed />,
-      },
-      {
-        path: "/friend",
-        element: <Friend />,
-      },
-      {
-        path: "/profile",
-        element: <Profile />,
-      },
-      {
-        path: "/chat",
-        element: <Chat />,
+        element: <Main />,
+        children: [
+          {
+            path: "/",
+            element: <Feed />,
+          },
+          {
+            path: "/feed",
+            element: <Feed />,
+          },
+          {
+            path: "/friend",
+            element: <Friend />,
+          },
+          {
+            path: "/profile",
+            element: <Profile />,
+          },
+          {
+            path: "/chat",
+            element: <Chat />,
+          },
+        ]
       },
     ],
   },
