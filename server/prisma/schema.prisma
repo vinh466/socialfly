@@ -11,17 +11,26 @@ datasource db {
 }
 
 model User {
-  id              String            @id @default(cuid()) @db.Char(25)
-  email           String            @unique
-  name            String?
-  role            Role              @default(USER)
-  posts           Post[]
-  profile         Profile?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt()
-  PostLike        PostLike[]
-  PostComment     PostComment[]
-  PostCommentLike PostCommentLike[]
+  username         String             @id @unique
+  password         String
+  email            String?            @unique
+  avatar           String             @db.VarChar(255)
+  firstname        String?
+  lastname         String?
+  gender           String?
+  birth            DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt()
+  Role             Role               @default(USER)
+  Post             Post[]
+  PostLike         PostLike[]
+  PostComment      PostComment[]
+  PostCommentLike  PostCommentLike[]
+  UserChatGroup    UserChatGroup[]
+  MessageRecipient MessageRecipient[]
+  Message          Message[]
+  followedBy       Friendship[]       @relation("following")
+  following        Friendship[]       @relation("follower")
 
   @@map("users")
 }
@@ -31,26 +40,30 @@ enum Role {
   ADMIN
 }
 
-model Profile {
-  id     String @id @default(cuid()) @db.Char(25)
-  bio    String
-  user   User   @relation(fields: [userId], references: [id])
-  userId String @unique
+model Friendship {
+  followerUser  String
+  followingUser String
+  isFriend      Boolean @default(false)
+  isRequest     Boolean @default(false)
+  isBlock       Boolean @default(false)
+  follower      User    @relation("follower", fields: [followerUser], references: [username])
+  following     User    @relation("following", fields: [followingUser], references: [username])
 
-  @@map("profiles")
+  @@id([followerUser, followingUser])
+  @@map("friendships")
 }
 
 model Post {
-  id          String         @id @default(cuid()) @db.Char(25)
-  title       String
-  published   Boolean        @default(false)
-  author      User           @relation(fields: [authorId], references: [id])
-  authorId    String
-  categories  PostCategory[]
-  createdAt   DateTime       @default(now())
-  PostLike    PostLike[]
-  PostComment PostComment[]
-  PostTag     PostTag[]
+  id           String         @id @default(cuid()) @db.Char(25)
+  title        String
+  published    Boolean        @default(false)
+  creatorId    String
+  createdAt    DateTime       @default(now())
+  Creator      User           @relation(fields: [creatorId], references: [username])
+  PostCategory PostCategory[]
+  PostLike     PostLike[]
+  PostComment  PostComment[]
+  PostTag      PostTag[]
 
   @@map("posts")
 }
@@ -59,7 +72,7 @@ model PostCategory {
   postId     String
   post       Post     @relation(fields: [postId], references: [id])
   categoryId String
-  categoriy  Category @relation(fields: [categoryId], references: [id])
+  Category   Category @relation(fields: [categoryId], references: [id])
 
   @@id([postId, categoryId])
   @@map("post_categories")
@@ -75,9 +88,9 @@ model Category {
 
 model PostTag {
   postId String
-  post   Post   @relation(fields: [postId], references: [id])
   tagId  String
-  tag    Tag    @relation(fields: [tagId], references: [id])
+  Post   Post   @relation(fields: [postId], references: [id])
+  Tag    Tag    @relation(fields: [tagId], references: [id])
 
   @@id([postId, tagId])
   @@map("post_tags")
@@ -88,9 +101,9 @@ model Tag {
   parentId String?
   name     String
   iconPath String?
-  post     PostTag[]
-  parentIs Tag?      @relation("TagChildOf", fields: [parentId], references: [id])
-  hasChild Tag[]     @relation("TagChildOf")
+  ParentIs Tag?      @relation("TagChildOf", fields: [parentId], references: [id])
+  HasChild Tag[]     @relation("TagChildOf")
+  PostTag  PostTag[]
 
   @@map("tags")
 }
@@ -98,10 +111,10 @@ model Tag {
 model PostLike {
   id        String   @id @default(cuid()) @db.Char(25)
   postId    String
-  post      Post     @relation(fields: [postId], references: [id])
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  username  String
   createdAt DateTime @default(now())
+  Post      Post     @relation(fields: [postId], references: [id])
+  User      User     @relation(fields: [username], references: [username])
 
   @@map("post_likes")
 }
@@ -109,10 +122,10 @@ model PostLike {
 model PostComment {
   id              String            @id @default(cuid()) @db.Char(25)
   postId          String
-  post            Post              @relation(fields: [postId], references: [id])
   userId          String
-  user            User              @relation(fields: [userId], references: [id])
   createdAt       DateTime          @default(now())
+  Post            Post              @relation(fields: [postId], references: [id])
+  User            User              @relation(fields: [userId], references: [username])
   PostCommentLike PostCommentLike[]
 
   @@map("post_comments")
@@ -123,8 +136,58 @@ model PostCommentLike {
   userId        String
   postCommentId String
   createdAt     DateTime    @default(now())
-  postComment   PostComment @relation(fields: [postCommentId], references: [id])
-  user          User        @relation(fields: [userId], references: [id])
+  PostComment   PostComment @relation(fields: [postCommentId], references: [id])
+  User          User        @relation(fields: [userId], references: [username])
 
   @@map("post_comment_likes")
+}
+
+model UserChatGroup {
+  id               String             @id @default(cuid()) @db.Char(25)
+  username         String
+  chatGroupId      String
+  createAt         DateTime           @default(now())
+  isActive         Boolean            @default(false)
+  User             User               @relation(fields: [username], references: [username])
+  ChatGroup        ChatGroup          @relation(fields: [chatGroupId], references: [id])
+  MessageRecipient MessageRecipient[]
+
+  @@map("user_chat_groups")
+}
+
+model ChatGroup {
+  id            String          @id @default(cuid()) @db.Char(25)
+  name          String
+  createAt      DateTime        @default(now())
+  isActive      Boolean         @default(false)
+  UserChatGroup UserChatGroup[]
+
+  @@map("chat_groups")
+}
+
+model MessageRecipient {
+  id               String        @id @default(cuid()) @db.Char(25)
+  recipientId      String
+  recipientGroupId String
+  messageId        String
+  isRead           Boolean       @default(false)
+  Recipient        User          @relation(fields: [recipientId], references: [username])
+  RecipientGroup   UserChatGroup @relation(fields: [recipientGroupId], references: [id])
+  Message          Message       @relation(fields: [messageId], references: [id])
+
+  @@map("message_recipients")
+}
+
+model Message {
+  id               String             @id @default(cuid()) @db.Char(25)
+  MessageRecipient MessageRecipient[]
+  creatorId        String
+  messageBody      String
+  parentId         String
+  createAt         DateTime           @default(now())
+  Creator          User               @relation(fields: [creatorId], references: [username])
+  ParentIs         Message?           @relation("MessageChildOf", fields: [parentId], references: [id])
+  HasChild         Message[]          @relation("MessageChildOf")
+
+  @@map("messages")
 }

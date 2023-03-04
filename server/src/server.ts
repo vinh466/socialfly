@@ -9,6 +9,7 @@ import { NodeEnvs } from '@/declarations/enum';
 import { RouteError } from '@/declarations/classes';
 import EnvVars from '@/declarations/config/envVars';
 import BaseRouter from '@/routes/api.route';
+import ApiError from './utils/ApiError.utils';
 
 const server = express();
 
@@ -23,28 +24,36 @@ if (EnvVars.nodeEnv === NodeEnvs.Dev) {
     server.use(morgan('dev'));
 }
 
-if (EnvVars.nodeEnv === NodeEnvs.Production) {
-    server.use(cors());
-}
+// if (EnvVars.nodeEnv === NodeEnvs.Production) {
+//     server.use(cors());
+// }
+server.use(cors());
+
+
+// **** Add API routes **** //
 
 server.get('/', (req: Request, res: Response) => {
     res.send('Server works!');
 });
 
-// **** Add API routes **** //
-
-// Add APIs
 server.use('/api', BaseRouter);
 
-// Setup error handler
+// handle 404 response
+server.use((req, res, next) => {
+    return next(new ApiError(404, "Resource not found", null));
+})
+// handle api error
 server.use((err: Error, _: Request, res: Response, next: NextFunction) => {
-    logger.err(err, true);
+    // logger.err(err, true);
     let status = StatusCodes.BAD_REQUEST;
-    if (err instanceof RouteError) {
-        status = err.status;
-    }
-    return res.status(status).json({ error: err.message });
-});
 
+    if (err instanceof ApiError) {
+        status = err.statusCode
+        return res.status(status).json({ meta: { message: err.message } });
+    } else if (err instanceof RouteError) {
+        status = err.status;
+        return res.status(status).json({ meta: { message: err.message } });
+    }
+});
 
 export default server;
