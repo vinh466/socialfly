@@ -1,105 +1,113 @@
 import Button from "@/components/Button";
 import { Link, useLoaderData, Outlet } from "react-router-dom";
-import { BsBell, BsArrowReturnRight, BsNewspaper, BsPeopleFill, BsFillChatQuoteFill } from "react-icons/bs";
+import { BsBell, BsArrowReturnRight, BsNewspaper, BsPeopleFill, BsFillChatQuoteFill, BsPersonFill, BsGearFill } from "react-icons/bs";
 import ThemeToggleBtn from "@/components/ThemeToggleBtn";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { authAction } from "@/store/auth.slice";
 
 export default function Root() {
     // const { contacts } = useLoaderData();
+    const { userInfo, isLogin } = useSelector((state: RootState) => state.auth)
+    const dispatch = useDispatch();
+    const handleLogOut = () => {
+        dispatch(authAction.logOut())
+    }
+
     return (
         <div className="container mx-auto flex flex-row">
-            <div id="sidebar" className="flex-1">
-                <div id="sidebar-wrapper" className="block ml-auto w-full max-w-[360px]">
-                    <div id="header-logo" className="flex-1 h-[64px] p-2">
-                        <img src="/public/socialfly-logo.png" className="block mx-auto" width={180} alt="logo" srcSet="socialfly-logo.png" />
+
+            <div className="wrapper flex w-full h-full flex-col">
+                <div className="h-[64px]">
+                    <div className="container fixed px-2 z-[999]">
+                        <header id="header" className=" p-1 h-[64px] flex flex-row gap-2 justify-between items-center rounded-br-lg rounded-bl-lg dark:border-solid dark:border-b dark:border-slate-500 primary-bg dark:primary-bg-dark ">
+
+                            <div id="header-logo" className="flex-1 max-w-[360px]">
+                                <img src="/public/socialfly-logo.png" className="block mx-auto" width={180} alt="logo" srcSet="socialfly-logo.png" />
+                            </div>
+                            <div className="flex-[3] flex mx-2 items-center">
+                                <div className="flex-[3]">
+                                    <input type="search" className="w-full outline-none bg-slate-100 p-2 rounded-lg hover:bg-slate-300 focus:bg-gray-300  dark:bg-slate-600 dark:hover:bg-slate-500 dark:focus:bg-gray-600" placeholder="Tìm kiếm" />
+                                </div>
+                                <ul className="flex-1 flex justify-end gap-3">
+                                    <li>
+                                        <Button className="p-2" >
+                                            <span className="flex items-center text-base leading-4">
+                                                <BsBell className="mr-2" />
+                                                Thông báo
+                                            </span>
+                                        </Button >
+                                    </li>
+                                    <li className="flex items-center">
+                                        <ThemeToggleBtn />
+                                    </li>
+                                    <li>
+                                        <Button className="p-2" onClick={handleLogOut}>
+                                            <span className="flex items-center text-base leading-4">
+                                                <BsArrowReturnRight className="mr-2" />
+                                                Đăng xuất
+                                            </span>
+                                        </Button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </header>
                     </div>
+                </div>
+                <div id="main" className="m-2 flex-1 flex gap-5">
+                    <div className="flex-1 max-w-[360px] mb-2 hidden lg:block">
+                        <div id="sidebar" className="fixed w-full max-w-[245px] xl:max-w-[360px] mb-2">
+                            <div id="sidebar-wrapper" className="block w-full ">
 
-                    <article
-                        className="animation-bg-gradient-1 hover:shadow-sm m-3"
-                    >
-                        <div className="rounded-[10px] primary-bg dark:primary-bg-dark p-4 !pt-20 sm:p-6">
-                            <time dateTime="2022-10-10" className="block text-xs">
-                                10th Oct 2022
-                            </time>
+                                {userInfo &&
+                                    <div className="flex items-center rounded-lg mb-2 primary-bg dark:primary-bg-dark">
+                                        <div className="p-4">
+                                            <Link className="" to={`/profile`}>
+                                                <img src={userInfo.avatar || '/public/no-avatar.png'} className="rounded-4xl" alt="avatar" width={50} height={50} />
+                                            </Link>
+                                        </div>
+                                        <div className="flex-1 flex flex-col p-2  ">
+                                            <span className="text-lg font-bold">{userInfo.firstname + ' ' + userInfo.lastname}</span>
+                                            <span className="italic text-sm ">@{userInfo.username}</span>
+                                        </div>
+                                        <div>
+                                            <Button className="py-3 px-4 mr-2">
+                                                <BsGearFill />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                }
 
-                            <a href="#">
-                                <h3 className="mt-0.5 text-lg font-medium">
-                                    How to center an element using JavaScript and jQuery
-                                </h3>
-                            </a>
-
-                            <div className="mt-4 flex flex-wrap gap-1">
-                                <span
-                                    className="whitespace-nowrap rounded-full bg-purple-100 px-2.5 py-0.5 text-xs text-purple-600"
-                                >
-                                    Snippet
-                                </span>
-
-                                <span
-                                    className="whitespace-nowrap rounded-full bg-purple-100 px-2.5 py-0.5 text-xs text-purple-600"
-                                >
-                                    JavaScript
-                                </span>
+                                <ul className="flex flex-col rounded-lg primary-bg dark:primary-bg-dark [&>li]:p-1">
+                                    <li>
+                                        <Button className="w-full">
+                                            <Link className="w-full flex items-center p-4" to={`/feed`}>
+                                                <BsNewspaper className="mr-2" />
+                                                Trang chủ
+                                            </Link>
+                                        </Button>
+                                    </li>
+                                    <li>
+                                        <Button className="w-full">
+                                            <Link className=" w-full flex items-center p-4" to={`/friend`}>
+                                                <BsPeopleFill className="mr-2" />
+                                                Bạn bè
+                                            </Link>
+                                        </Button>
+                                    </li>
+                                    <li>
+                                        <Button className="w-full">
+                                            <Link className=" w-full flex items-center p-4" to={`/chat`}>
+                                                <BsFillChatQuoteFill className="mr-2" />
+                                                Chat
+                                            </Link>
+                                        </Button>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
-                    </article>
-                    <ul className="flex flex-col rounded-lg m-3 primary-bg dark:primary-bg-dark [&_li>div]:px-4 [&>li]:px-1">
-                        <li>
-                            <Button>
-                                <BsNewspaper />
-                                <Link className="block w-full p-4 " to={`/feed`}>Trang chủ</Link>
-                            </Button>
-                        </li>
-                        <li>
-                            <Button>
-                                <BsPeopleFill />
-                                <Link className="block w-full p-4 " to={`/friend`}>Bạn bè</Link>
-                            </Button>
-                        </li>
-                        <li>
-                            <Button>
-                                <BsFillChatQuoteFill />
-                                <Link className="block w-full p-4 " to={`/chat`}>Chat</Link>
-                            </Button>
-                        </li>
-                        <li>
-                            <Button>
-                                <Link className="block w-full p-4 " to={`/login`}>Login</Link>
-                            </Button>
-                        </li>
-                        <li>
-                            <Button>
-                                <Link className="block w-full p-4 " to={`/register`}>Register</Link>
-                            </Button>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div className="flex-[3] ">
-                <div className="wrapper">
-                    <header id="header" className="p-2 h-[64px] flex flex-row justify-between items-center">
-                        <div className="flex-1 px-4">
-                            <input type="search" className="w-full outline-none bg-slate-100 hover:bg-slate-200 focus:bg-slate-100 dark:hover:bg-slate-600 dark:bg-slate-700 dark:focus:bg-slate-700" placeholder="Tìm kiếm" />
-                        </div>
-                        <ul className="flex gap-3">
-                            <li>
-                                <Button className="p-2">
-                                    <BsBell />
-                                    <span className="">Thông báo</span>
-                                </Button >
-                            </li>
-                            <li className="flex items-center">
-                                <ThemeToggleBtn />
-                            </li>
-                            <li>
-                                <Button className="p-2">
-                                    <BsArrowReturnRight />
-                                    <span>Đăng xuất</span>
-                                </Button>
-                            </li>
-                        </ul>
-                    </header>
-                    <div id="main" className="flex-[3] m-2">
+                    </div>
+                    <div className="flex-[3]">
                         <Outlet />
                     </div>
                 </div>

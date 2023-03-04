@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { BsFillCloudMoonFill, BsFillCloudSunFill } from 'react-icons/bs'
-function ThemeToggleBtn() {
-    const [theme, setTheme] = useState('dark')
+function ThemeToggleBtn({ className }: { className?: string }) {
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light')
     useEffect(() => {
         document.documentElement.dataset.mode = theme;
+        localStorage.setItem('theme', theme)
     }, [theme])
 
     return (
-        <label htmlFor="ThemeToggleButton" className="block relative h-8 w-14 cursor-pointer ">
+        <label htmlFor="ThemeToggleButton" className={"block relative h-8 w-14 cursor-pointer " + className}>
             <input
                 type="checkbox"
                 id="ThemeToggleButton"
@@ -17,7 +18,7 @@ function ThemeToggleBtn() {
             />
 
             <span
-                className="absolute inset-0 z-10 m-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 peer-checked:bg-dark text-amber-500 transition  peer-checked:text-white peer-checked:translate-x-6"
+                className="absolute inset-0 z-10 m-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 peer-checked:bg-dark text-sky-500 transition  peer-checked:text-white peer-checked:translate-x-6"
             >
                 <BsFillCloudMoonFill data-checked-icon className="hidden h-4 w-4" />
 
