@@ -8,4 +8,6 @@ interface UserCard {
 }
 interface UserCardResult extends ApiResult<UserCard[]> { }
 
+interface FriendCardResult extends ApiResult<Array<UserCard & { chatRoomId: string }>> { }
+
 interface FriendRequestResult extends ApiResult<null, ApiPostMeta> { }

@@ -17,7 +17,7 @@ export const accessTokenValidate = async (req: Request, res: Response, next: Nex
         req.username = decoded.username;
         next();
     } catch (err) {
-        console.log(err);
+        // console.log(err);
         let message = 'Could not refresh access token !'
         if (err instanceof JsonWebTokenError) {
             if (err.message === 'jwt must be provided') message = 'Refresh token must be provided !'

@@ -1,3 +1,4 @@
+import { useRefreshTokenMutation } from "@/services/auth.service";
 import { RootState, useAppDispatch } from "@/store";
 import { authAction } from "@/store/auth.slice";
 import { useEffect, useLayoutEffect } from "react";
@@ -6,14 +7,11 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
 
 
 function ProtectedRoute() {
-    const { isLogin } = useSelector((state: RootState) => state.auth)
-    const dispatch = useAppDispatch()
-    useLayoutEffect(() => {
-        const promise = dispatch(authAction.refreshToken())
-        return () => {
-            promise.abort();
-        }
-    }, [isLogin])
+    const { isLogin, isRefreshToken, refreshToken } = useSelector((state: RootState) => state.auth)
+    const [refreshTokenMutation] = useRefreshTokenMutation()
+    useEffect(() => {
+        isRefreshToken && refreshToken && refreshTokenMutation(refreshToken);
+    }, [])
     return (
         isLogin ? <Outlet /> : <Navigate to={'/login'} />
     )

@@ -1,28 +1,18 @@
 import Button from "@/components/Button"
-import userService from "@/services/user.service";
+import { useAcceptFriendRequestMutation, useGetFriendRequestQuery } from "@/services/user.service";
 import { useEffect, useState } from "react";
 
 function FriendRequestList() {
-    const [userList, setUserList] = useState<UserCard[]>([])
-    async function getuser(apiSignal?: AbortController) {
-        const { data: user } = await userService.getFriendRequest(apiSignal);
-        console.log(user);
-        setUserList(user)
-    }
-    useEffect(() => {
-        const apiSignal = new AbortController()
-        getuser(apiSignal)
-        return () => apiSignal.abort();
-    }, [])
+    const { data, isFetching, refetch } = useGetFriendRequestQuery()
+    const [acceptFriend, acceptFriendResult] = useAcceptFriendRequestMutation();
 
     async function handleAcceptFriend(isAccept: boolean, recipient: string) {
-        await userService.acceptFriendRequest(isAccept, recipient)
-        getuser()
+        acceptFriend({ isAccept, recipient })
     }
     return (
         <div className="flex flex-row flex-wrap gap-4 my-2 max-h-[460px] custom-scrollbar overflow-y-auto">
             {
-                userList.length ? userList.map((user, i) => (
+                data?.data.length ? data?.data.map((user, i) => (
                     <div className="flex-1 xl:max-w-[calc(50%-10px)]  min-w-[320px] background rounded-lg flex items-center p-4" key={i}>
                         <img src={user.avatar || '/public/no-avatar.png'} alt="no avatar" className="rounded-full w-16 h-16" />
                         <div className="flex flex-col flex-1 mx-4">

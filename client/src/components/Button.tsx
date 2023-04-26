@@ -1,23 +1,27 @@
+import classNames from 'classnames';
 import { PropsWithChildren, ReactNode } from 'react'
 
 interface PropTypes {
     children?: React.ReactNode;
     className?: string
     border?: boolean
+    background?: boolean
     active?: boolean
     onClick?: () => void;
 }
 
 function Button(props: PropTypes) {
-    const textStyle = 'text-left text-slate-600 active:text-gray-400 dark:text-gray-200 dark:active:text-gray-300'
-    const bgStyle = 'hover:bg-slate-300 active:bg-slate-200 dark:hover:bg-gray-600'
-    const utilStyle = 'cursor-pointer select-none rounded-md transition-colors ease-out'
-    const borderStyle = 'border border-sky-400'
-    const activeStyle = props.active ? 'text-sky-400 dark:active:text-sky-400 bg-slate-300 dark:bg-gray-600' : ''
-
     return (
         <button
-            className={`${textStyle} ${bgStyle} ${utilStyle} ${props.border && borderStyle} ${activeStyle} ${props.className}`}
+            className={classNames(
+                'text-left text-slate-600 dark:text-gray-200 active:text-sky-600 dark:active:text-slate-400',
+                'hover:bg-slate-300 dark:hover:bg-gray-600',
+                'cursor-pointer select-none rounded-md transition-colors ease-out',
+                { 'border border-sky-400 ': props.border },
+                { 'bg-sky-400 hover:bg-sky-400 active:text-slate-200 text-white dark:bg-gray-600': props.active },
+                { 'bg-sky-500 text-white dark:bg-sky-600': props.background },
+                props.className
+            )}
             onClick={() => props.onClick && props.onClick()}
         >
             {props.children}

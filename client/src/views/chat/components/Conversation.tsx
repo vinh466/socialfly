@@ -1,82 +1,95 @@
-import { useState, useContext, useEffect, memo } from 'react'
+import { useState, useContext, useEffect, memo, useCallback, useMemo } from 'react'
 import ChatInput from './ChatInput'
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { RootState, useAppDispatch } from '@/store';
 import { chatAction } from '../../../store/chat.slice';
-import { SocketContext } from '@/components/SocketContext';
+import { SocketContext, SocketContextValue } from '@/components/SocketContext';
 import { ChatEvent } from '@/declarations/socketEvent';
 import Button from '@/components/Button';
+import { Link, useParams } from 'react-router-dom';
+import { ChatLog, Message, MessageReq, Room } from '@/types/chat.type';
+import ChatMessage from './ChatMessage';
+import { useGetChatLogQuery } from '@/services/chat.service';
+import { ServerEmit } from '@/types/socket.type';
+import { RoomInfo, formatChatLog, getRoomInfo } from '@/utils/chat.util';
+import { BsCameraVideoFill, BsFillChatQuoteFill, BsTelephoneFill, BsThreeDotsVertical } from 'react-icons/bs';
+import Portal from '@/components/Portal';
+import CallChat from '@/components/CallChat';
+import VideoCallChat from '@/components/VideoCallChat';
+import Peer from 'peerjs';
 
-interface Message {
-    message: string,
-    username: string
-    time?: string,
-}
-type ChatLog = Message[]
 
-interface PropType {
+interface PropTypes {
     roomId: string
 }
-function Conversation(props: PropType) {
-    const [messageInput, setMmessageInput] = useState('')
-    const [chatLog, setChatLog] = useState<ChatLog>([])
-    const { socket } = useContext(SocketContext)
-    const { userInfo } = useSelector((state: RootState) => state.auth);
+
+function Conversation(props: PropTypes) {
+    const { socket } = useContext(SocketContext) as SocketContextValue
+    const {
+        auth: { userInfo },
+        chat: { chatLogs, chatRoomInfo, callRequest, currVideoCallId, currCallId, }
+    } = useSelector((state: RootState) => state);
+
+
+    const dispatch = useAppDispatch()
+
+    const roomInfo = useMemo(
+        () => chatRoomInfo[props.roomId],
+        [props.roomId, chatRoomInfo[props.roomId]]
+    )
 
     useEffect(() => {
-        console.log("Join room", props.roomId);
-        socket.emit(ChatEvent.Client.GetRoom)
-        socket.emit(ChatEvent.Client.JoinRoom, { roomId: props.roomId })
-        setChatLog([])
-        socket.on(ChatEvent.Server.RoomMessage, (payload: Message) => {
-            setChatLog(state => [...state, payload])
-        })
-
-        return () => {
-            console.log("Leave room", props.roomId);
-            socket.emit(ChatEvent.Client.LeaveRoom, ({ roomId: props.roomId }))
-            socket.removeListener(ChatEvent.Server.RoomMessage)
-        }
+        socket.emit('chatClient_getRoom', { body: { chatRoomId: props.roomId } })
+        socket.emit('chatClient_getChatLog', { body: { chatRoomId: props.roomId } })
     }, [props.roomId])
-    useEffect(() => { console.log(chatLog); }, [chatLog])
-
-    const dispatch = useDispatch();
-
-    function sendMessage() {
-        const msg = {
-            roomId: props.roomId,
-            message: messageInput,
-            username: userInfo?.username || ''
+    function handleCall() {
+        if (!currVideoCallId && !currCallId) {
+            dispatch(chatAction.startCall(props.roomId))
         }
-        socket.emit(ChatEvent.Client.SendRoomMessage, msg)
-
-        setChatLog(state => [...state, msg])
     }
+    function handleVideoCall() {
+        if (!currVideoCallId && !currCallId) {
+            dispatch(chatAction.startVideoCall(props.roomId))
+        }
+    }
+    function handleSendMessage(messageData: Omit<MessageReq, "chatRoomId">) {
+        socket.emit('chatClient_sendRoomMessage', {
+            body: { ...messageData, chatRoomId: props.roomId, }
+        }, (res: any) => console.log(res?.status))
+    }
+
     return (
-        <div className='h-full flex flex-col p-4'>
-            {/* <div className="flex-1"></div>
-            <div className=""><ChatInput /></div> */}
-            <p>{props.roomId}</p>
-            <div className="room ">
-                <div className="control flex">
-                    <input type="text" placeholder='message'
-                        value={messageInput}
-                        onChange={(e) => setMmessageInput(e.target.value)}
-                        className='bg-slate-800 p-2 rounded-md mr-3'
-                        onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-                    />
-                    <Button className='block w-[110px] px-2' onClick={sendMessage}>Gửi</Button>
+        <div className='h-full flex flex-col gap-1'>
+            <div className="background flex justify-between w-full p-1 rounded-lg">
+                <div className='flex items-center gap-2 '>
+                    <img src="/public/no-avatar.png" className="w-8 h-8 object-cover rounded-full m-2 self-end" alt="user avatar" />
+                    <span>{roomInfo?.roomName}</span>
                 </div>
-                <div className="history">
+                <div className="flex items-center gap-1">
+                    <Button className="flex items-center p-2 rounded-full" onClick={handleVideoCall}>
+                        <BsCameraVideoFill />
+                    </Button>
+                    <Button className="flex items-center p-2 rounded-full" onClick={handleCall}>
+                        <BsTelephoneFill />
+                    </Button>
+                    <Button className="flex items-center p-2 rounded-full" >
+                        <BsThreeDotsVertical />
+                    </Button>
+                </div>
+            </div>
+            <div className="flex-1 background ">
+                <ul className="mt-3 max-h-[calc(100vh-210px)] custom-scrollbar overflow-x-auto
+                flex flex-col-reverse">
                     {
-                        chatLog.map((e: Message, i) => {
+                        chatLogs[props.roomId]?.length && chatLogs[props.roomId]?.map((msg, i) => {
                             return (
-                                <li key={i}>{e.username}: {e.message}</li>
+                                <ChatMessage chatMessage={msg} key={i} />
                             )
                         })
                     }
-                </div>
+                </ul>
             </div>
+            <ChatInput onSend={(messageData) => handleSendMessage(messageData)} />
         </div>
     )
 }

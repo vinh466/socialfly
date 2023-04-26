@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  #modal-root {
+    display: none;
+    @apply bg-sky-900 bg-opacity-20;
+    position: absolute;
+    inset: 0;
+    z-index: 999;
+  }
+  #modal-root.active {
+    display: block;
+  }
+  #modal-root > div {
+    position: relative;
+  }
+}
+
+@layer components {
+}

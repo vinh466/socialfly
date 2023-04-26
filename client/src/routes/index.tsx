@@ -3,9 +3,9 @@ import Main from "@/views/layouts/Main.layout";
 import None from "@/views/layouts/None.layout";
 import ErrorPage from "@/views/ErrorPage";
 import Chat from "@/views/chat/Chat";
-import Feed from '@/views/Feed';
+import Feed from '@/views/Feed/Feed';
 import Friend from '@/views/friend/Friend';
-import Profile from '@/views/Profile';
+import Profile from '@/views/profile/Profile';
 import Auth from "@/views/auth/Auth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -50,6 +50,10 @@ const router = createBrowserRouter([
           },
           {
             path: "/chat",
+            element: <Chat />,
+          },
+          {
+            path: "/chat/:roomId",
             element: <Chat />,
           },
         ]

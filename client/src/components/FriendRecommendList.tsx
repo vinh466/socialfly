@@ -1,33 +1,21 @@
 import { useEffect, useState } from "react";
 import Button from "./Button"
-import userService from "@/services/user.service";
+import { useGetRecommendQuery, useSendFriendRequestMutation } from "@/services/user.service";
 import { rangeArray } from "@/utils/array.util";
 
 
 function FriendRecommendList() {
-    const [userList, setUserList] = useState<UserCard[]>([])
-    const [isLoading, setIsLoading] = useState(false)
-    async function getuser(apiSignal?: AbortController) {
-        const { data: user } = await userService.getRecommend(apiSignal);
-        setUserList(user)
-    }
-    useEffect(() => {
-        setIsLoading(true)
-        const apiSignal = new AbortController()
-        getuser(apiSignal)
-        setIsLoading(false)
-        return () => apiSignal.abort();
-    }, [])
+    const { data, isFetching, refetch, isLoading } = useGetRecommendQuery()
+    const [sendFriendRequest, sendFriendRequestResult] = useSendFriendRequestMutation()
     async function handleSendRequset(recipient: string) {
-        const { meta } = await userService.sendFriendRequest(recipient)
-        if (meta?.message) getuser();
+        sendFriendRequest({ recipient })
     }
     return (
         <div className="flex flex-col gap-2 my-2 background rounded-lg py-3">
             {
-                userList.length ?
+                data?.data.length ?
                     <div>
-                        {userList.slice(0, 4).map((user, i) => (
+                        {data?.data.slice(0, 4).map((user, i) => (
                             <div className="flex-1 min-w-[240px] flex items-center py-1 px-4" key={i}>
                                 <img src={user.avatar || '/public/no-avatar.png'} alt="no avatar" className="rounded-full w-16 h-16" />
                                 <div className="flex flex-col flex-1 mx-4">
@@ -44,9 +32,8 @@ function FriendRecommendList() {
                             </div>
                         ))
                         }
-                        <label className="text-lg text-gray-500 dark:text-gray-300 font-bold text-center">Tìm kiếm thêm</label>
+                        <div className="text-lg text-gray-500 dark:text-gray-300 font-bold text-center">Tìm kiếm thêm</div>
                     </div>
-
                     :
                     isLoading ?
                         rangeArray(2).map((v, i) => (
@@ -67,7 +54,6 @@ function FriendRecommendList() {
                         ))
                         :
                         <div className="text-gray-500 dark:text-gray-300 font-bold text-center">Không có gợi ý!</div>
-
             }
         </div>
     )

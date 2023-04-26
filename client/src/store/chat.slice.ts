@@ -1,62 +1,120 @@
-import { Chat, ChatItem } from '@/types/chat.type';
+import { CallParticipant, Chat, ChatItem, ChatLog, Message, Room } from '@/types/chat.type';
+import { CallRequest, MessageFromPeer, ServerCallResponse } from '@/types/chatRTC.type';
+import { ServerEmit } from '@/types/socket.type';
+import { RoomInfo, formatChatLog, getRoomInfo } from '@/utils/chat.util';
 import { PayloadAction, createAction, createReducer, createSlice } from '@reduxjs/toolkit';
 import produce, { current } from 'immer';
+import Peer from 'peerjs';
 import io, { Socket } from 'socket.io-client';
 
 const SOCKET_URL = 'localhost:3200'
+interface CallRespone extends ServerCallResponse {
+    meta: any
+}
 
 interface ChatSlice {
-    socket?: any,
-    username: string,
-    messages?: ChatItem[],
-    roomId?: string,
-    rooms: object,
-    conversations: [],
+    currRoomId?: string,
+
+    currRoom?: Room,
+    chatRoomInfo: { [key: string]: RoomInfo | undefined },
+    chatLogs: { [key: string]: Array<Message | Message[]> | undefined },
+    chatRoomList: RoomInfo[],
+
+    currVideoCallId?: string
+    currCallId?: string
+    callRequest?: CallRequest
+    callResponse?: CallRespone
+    callCurrent?: CallRequest
+    callParticipants: CallParticipant[]
+    callStatus: 'calling' | 'waitting' | 'nocall'
 }
 
 const initialState: ChatSlice = {
-    username: '',
-    socket: undefined,
-    messages: [],
-    roomId: '',
-    rooms: {},
-    conversations: [],
+    currRoomId: undefined,
+
+    chatRoomInfo: {},
+    chatLogs: {},
+    chatRoomList: [],
+
+    currVideoCallId: undefined,
+    currCallId: undefined,
+    callRequest: undefined,
+    callResponse: undefined,
+    callCurrent: undefined,
+    callParticipants: [],
+    callStatus: 'nocall'
 }
 const chatSlice = createSlice({
     name: 'chat',
     initialState,
     reducers: {
-        setUsername(state, action: PayloadAction<string>) {
-            console.log('setUsername:', action.payload);
-            state.username = action.payload;
+        reset() {
+            return initialState
         },
-        sendMesageReq(state, action: PayloadAction<any>) {
-            console.log('sendMesageReq');
+        setCurrentRoom(state, action: PayloadAction<string>) {
+            state.currRoomId = action.payload;
         },
-        updateChatLog(state, action: PayloadAction<any>) {
-            console.log('updateChatLog');
+        setChatRoomList(state, action: PayloadAction<{ username: string, rooms: Room[] }>) {
+            const rooms = action.payload.rooms.map((e) => getRoomInfo(action.payload.username, e))
+            state.chatRoomList = rooms
         },
-        createRoomReq(state) {
-            console.log('createRoomReq');
+        setChatLog(state, action: PayloadAction<{ chatRoomId: string, logs: Message[] }>) {
+            const chatLogs = formatChatLog(action.payload.logs)
+            state.chatLogs = {
+                ...state.chatLogs,
+                [action.payload.chatRoomId]: chatLogs
+            }
         },
-        createRoomSuccess(state, action: PayloadAction<any>) {
-            console.log('createRoomSuccess');
+        setChatRoomInfo(state, action: PayloadAction<{ username: string, room: Room }>) {
+            const chatRoomId = action.payload.room.id
+            const roomInfo = getRoomInfo(action.payload.username, action.payload.room)
+            state.chatRoomInfo = {
+                ...state.chatRoomInfo,
+                [chatRoomId]: roomInfo
+            }
         },
-        createRoomError(state, action: PayloadAction<any>) {
-            console.log('createRoomError');
-            state.messages?.at
-            console.log(action.payload);
+        setCallRequest(state, action: PayloadAction<{ username: string, request: MessageFromPeer } | undefined>) {
+            if (action.payload) {
+                const chatRoomId = action.payload.request.roomInfo.id
+                const roomInfo = getRoomInfo(action.payload.username, action.payload.request.roomInfo)
+                state.callRequest = {
+                    ...action.payload.request,
+                    roomInfo,
+                }
+                state.chatRoomInfo = {
+                    ...state.chatRoomInfo,
+                    [chatRoomId]: roomInfo
+                }
+            } else {
+                state.callRequest = undefined
+            }
         },
-        joinRoomReq(state) {
-            console.log('joinRoomReq');
+        setCallResponse(state, action: PayloadAction<CallRespone | undefined>) {
+            if (action.payload) state.callResponse = action.payload
+            else state.callResponse = undefined
         },
-        joinRoomSuccess(state, action: PayloadAction<any>) {
-            console.log('joinRoomSuccess');
+        setCallParticipants(state, action: PayloadAction<Array<CallParticipant> | undefined>) {
+            if (action.payload) state.callParticipants = action.payload
+            else state.callParticipants = []
         },
-        joinRoomError(state, action: PayloadAction<any>) {
-            console.log('joinRoomError');
-            console.log(action.payload);
+        startVideoCall(state, { payload }: PayloadAction<string>) {
+            if (!state.currVideoCallId && !state.currCallId) {
+                state.currVideoCallId = payload
+            }
         },
+        startCall(state, { payload }: PayloadAction<string>) {
+            if (!state.currVideoCallId && !state.currCallId) {
+                state.currCallId = payload
+            }
+        },
+        endCall(state, { payload }: PayloadAction<undefined>) {
+            state.currVideoCallId = undefined
+            state.currCallId = undefined
+            state.callParticipants = []
+            state.callRequest = undefined
+            state.callResponse = undefined
+            state.callStatus = 'nocall'
+        }
     }
 })
 

@@ -1,3 +1,5 @@
+import chatController from "@/controllers/chat.controller";
+import { accessTokenValidate } from "@/middlewares/jwtValidate.mdw";
 import { PrismaClient } from "@prisma/client";
 import { NextFunction, Request, Response, Router } from "express";
 
@@ -11,12 +13,9 @@ apiRouter.get('/', (req: Request, res: Response) => {
     res.json('Chat works!');
 })
 
-apiRouter.get('/room', (req: Request, res: Response) => {
-    res.json(req.query);
-})
-apiRouter.get('/room/:id', (req: Request, res: Response) => {
-    res.json({ id: req.params.id });
-})
+apiRouter.get('/room', accessTokenValidate, chatController.getRoomList)
+apiRouter.get('/room/:id/chatLog', accessTokenValidate, chatController.getChatLog)
+apiRouter.get('/room/:id/member', chatController.getChatRoomMember)
 
 
 export default apiRouter;

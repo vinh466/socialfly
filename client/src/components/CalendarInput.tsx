@@ -18,13 +18,13 @@ function CalendarInput({ label, dayField, monthField, yearField, errorMessage, t
     const currentYear = (new Date()).getFullYear()
 
     const [dayList, setDayList] = useState(rangeArray(1, 31))
-    const [currDay, setCurrDay] = useState('')
+    const [currDay, setCurrDay] = useState('1')
 
     const [monthList, setMonthList] = useState(rangeArray(1, 12))
-    const [currMonth, setCurrMonth] = useState('')
+    const [currMonth, setCurrMonth] = useState('1')
 
     const [yearList, setYearList] = useState(rangeArray(currentYear, currentYear - 70))
-    const [currYear, setCurrYear] = useState('')
+    const [currYear, setCurrYear] = useState('2023')
 
     const handleChangeTime = ({ newDay, newMonth, newYear }: { [key: string]: string | undefined }) => {
         newDay && setCurrDay(newDay)

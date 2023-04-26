@@ -4,11 +4,11 @@ class ApiError extends Error {
     statusCode: number;
     error: any;
 
-    constructor(statusCode: number, message: string, error: any = null) {
+    constructor(statusCode: number, message: string, name: string = '') {
         super();
         this.statusCode = statusCode;
         this.message = message;
-        this.error = error;
+        this.name = name;
     }
 }
 

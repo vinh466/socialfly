@@ -4,8 +4,9 @@ import * as yup from 'yup'
 import { useEffect } from "react";
 import Button from "@/components/Button";
 import FormInput from "@/components/FormInput";
+import { LoginFormData } from "@/services/auth.service";
 
-export interface LoginFormData extends Pick<User, 'username' | 'password'> { }
+
 
 type PropTypes = {
     className?: string

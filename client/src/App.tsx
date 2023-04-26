@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react'
-import { Link, RouterProvider } from "react-router-dom";
+
+import { RouterProvider } from "react-router-dom";
 import router from './routes';
-import { authAction } from './store/auth.slice';
-import { useSelector } from 'react-redux';
-import { RootState } from './store';
-import userService from './services/user.service';
+import Call from './components/Call';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
+
   return (
-    <RouterProvider router={router} />
+    <div>
+      <RouterProvider router={router} />
+      <Call />
+      <Toaster />
+    </div>
   )
 
 }

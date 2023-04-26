@@ -6,6 +6,8 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 import { StatusCodes } from "http-status-codes";
 import { hash, compare } from 'bcryptjs';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "@/utils/jwt.util";
+import { imageUpload } from "@/middlewares/uploadFile.mdw";
+import { MulterError } from "multer";
 
 interface tokenData {
     username: string;
@@ -71,29 +73,58 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
-    const { username, password } = req.body
-    // Check if the user exist 
-    const user = await db.user.findUnique({
-        where: { username }
-    })
-    if (!user) return next(new ApiError(404, 'User no exist !'))
+    try {
+        const { username, password } = req.body
+        // Check if the user exist 
+        const user = await db.user.findUnique({
+            where: { username }
+        })
+        if (!user) return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Tài khoản không tồn tại'))
 
-    const validPassword = compare(password, user.password)
-    if (!validPassword) return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Password invalid !'))
+        const validPassword = await compare(password, user.password)
+        // console.log(validPassword);
+        if (!validPassword) return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Mật khẩu không chính xác'))
 
-    // Sign new refresh token
-    const refreshToken = signRefreshToken(username)
-    // Sign new access token
-    const accessToken = signAccessToken(username)
-    const { password: _, ...userRes } = user
-    // Send response
-    res.status(StatusCodes.OK).json({
-        ...userRes,
-        refreshToken,
-        accessToken,
-    });
+        // Sign new refresh token
+        const refreshToken = signRefreshToken(username)
+        // Sign new access token
+        const accessToken = signAccessToken(username)
+        const { password: _, ...userRes } = user
+        // Send response
+        res.status(StatusCodes.OK).json({
+            ...userRes,
+            refreshToken,
+            accessToken,
+        });
+    } catch (error) {
+        return next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'INTERNAL_SERVER_ERROR'));
+    }
 }
 
+const updateAvatar = async (req: Request, res: Response, next: NextFunction) => {
+    imageUpload('image')(req, res, async function (err) {
+        if (err instanceof MulterError) {
+            return res.status(422).json({ err })
+        } else if (err) {
+            return res.status(500).json({ err })
+        }
+        try {
+            const user = await db.user.update({
+                data: {
+                    avatar: req.file?.filename ? 'http://localhost:3200/images/' + req.file?.filename : ''
+                },
+                where: {
+                    username: req.username!
+                }
+            })
+            return res.status(200).json({ avatar: req.file?.filename ? 'http://localhost:3200/images/' + req.file?.filename : '' });
+
+        } catch (err: any) {
+            console.log(err);
+            return next(new ApiError(500, err.message));
+        }
+    })
+}
 const refreshAccessToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get the refresh token from header 
@@ -120,7 +151,7 @@ const refreshAccessToken = async (req: Request, res: Response, next: NextFunctio
             });
         }, 3000)
     } catch (err: any) {
-        console.log(err);
+        // console.log(err);
         let message = 'Could not refresh access token !'
         if (err instanceof JsonWebTokenError) {
             if (err.message === 'jwt must be provided') message = 'Refresh token must be provided !'
@@ -130,9 +161,12 @@ const refreshAccessToken = async (req: Request, res: Response, next: NextFunctio
         return next(new ApiError(StatusCodes.FORBIDDEN, message));
     }
 };
+
+
 const authController = {
     register,
     login,
     refreshAccessToken,
+    updateAvatar
 }
 export default authController

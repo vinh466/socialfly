@@ -4,6 +4,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 import { StatusCodes } from "http-status-codes";
 import { db } from "@/index";
 import { isEmpty, validateObject } from "@/utils/object.util";
+import { computeChatRoomId } from "@/utils/prisma.helper";
 
 const defaultSelect = {
     username: true,
@@ -91,8 +92,8 @@ const getRecommend = async (req: Request, res: Response, next: NextFunction) => 
             select: defaultSelect,
             where: {
                 NOT: { username: req.username, },
-                followedBy: { none: { followerUser: req.username } },
-                following: { none: { followingUser: req.username } }
+                followedBys: { none: { followerUser: req.username } },
+                followings: { none: { followingUser: req.username } }
             },
             orderBy: {
                 createdAt: 'desc'
@@ -114,7 +115,7 @@ const getFriendRequest = async (req: Request, res: Response, next: NextFunction)
             select: defaultSelect,
             where: {
                 NOT: { username: req.username, },
-                following: { some: { followingUser: req.username, isRequest: true } },
+                followings: { some: { followingUser: req.username, isRequest: true } },
             },
             orderBy: {
                 createdAt: 'desc' // TODO change to sort by request friend time
@@ -133,16 +134,34 @@ const getFriends = async (req: Request, res: Response, next: NextFunction) => {
     console.log(req.username);
     try {
         const user = await db.user.findMany({
-            select: defaultSelect,
+            select: {
+                ...defaultSelect,
+                userChatRooms: {
+                    select: {
+                        chatRoomId: true
+                    },
+                    where: {
+                        chatRoom: {
+                            userChatRooms: {
+                                some: {
+                                    username: req.username
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             where: {
                 NOT: { username: req.username, },
-                following: { some: { followingUser: req.username, isFriend: true } },
+                followings: { some: { followingUser: req.username, isFriend: true } },
             },
             orderBy: {
                 createdAt: 'desc'  // TODO change to sort by request friend time
             }
         })
-        return res.status(200).json({ data: user });
+        const computeUUser = user.map((value, i) => computeChatRoomId(value))
+
+        return res.status(200).json({ data: computeUUser });
     } catch (err) {
         console.log(err);
         let message = 'Cannot find user'
@@ -152,7 +171,7 @@ const getFriends = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 const sendFriendRequest = async (req: Request, res: Response, next: NextFunction) => {
-    const { username: recipient } = req.body
+    const { recipient } = req.body
     const friendshipId = {
         followerUser_followingUser: {
             followerUser: req.username as string,
@@ -191,7 +210,7 @@ const sendFriendRequest = async (req: Request, res: Response, next: NextFunction
 }
 
 const acceptFriendRequest = async (req: Request, res: Response, next: NextFunction) => {
-    const { isAccept, username: recipient } = req.body
+    const { isAccept, recipient } = req.body
     const friendshipId = {
         followerUser_followingUser: {
             followerUser: req.username as string,
@@ -233,9 +252,24 @@ const acceptFriendRequest = async (req: Request, res: Response, next: NextFuncti
                     isFriend: true
                 }
             })
-            await db.$transaction([updateUser, updateUser2])
+            const createChatRoom = db.chatRoom.create({
+                data: {
+                    memberNum: 2,
+                    userChatRooms: {
+                        createMany: {
+                            data: [
+                                { username: req.username, },
+                                { username: recipient }
+                            ]
+                        }
+                    }
+                }
+            })
+            console.log('asdasd');
+            const trnas = await db.$transaction([updateUser, updateUser2, createChatRoom])
+            console.log(trnas);
         } else {
-            const updateUser2 = db.friendship.upsert({
+            const updateUser2 = await db.friendship.upsert({
                 where: friendshipId2,
                 update: {
                     isRequest: false
@@ -254,6 +288,7 @@ const acceptFriendRequest = async (req: Request, res: Response, next: NextFuncti
             }
         })
     } catch (err) {
+        console.log(err);
         let message = 'Cannot find user'
         let status = StatusCodes.NOT_FOUND
         return next(new ApiError(status, message));

@@ -6,3 +6,8 @@ declare module "express-serve-static-core" {
         username?: string;
     }
 }
+declare module 'socket.io' {
+    interface Socket {
+        username: string
+    }
+}

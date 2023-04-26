@@ -5,15 +5,8 @@ import { useEffect } from "react";
 import Button from "@/components/Button";
 import FormInput from "@/components/FormInput";
 import CalendarInput from "@/components/CalendarInput";
+import { RegisterFormData } from "@/services/auth.service";
 
-
-export interface RegisterFormData extends Pick<User, 'username' | 'password' | 'firstname' | 'lastname'> {
-    rePassword: string
-    gender: string
-    dayBirth: string
-    monthBirth: string
-    yearBirth: string
-}
 
 type PropTypes = {
     className?: string
@@ -89,7 +82,7 @@ function RegisterForm({ className, onSubmit }: PropTypes) {
                     <label htmlFor="gender" className="text-sm font-medium mx-1">Giới tính:</label>
                     <div className="mx-3 flex">
                         <label htmlFor="gender-1" className="ml-1 mr-3">
-                            <input type="radio" {...register('gender')} value="male" id="gender-1" />
+                            <input type="radio" {...register('gender')} value="male" id="gender-1" checked />
                             Nam
                         </label>
                         <label htmlFor="gender-2" className="mx-1">

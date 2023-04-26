@@ -131,6 +131,14 @@
       transform: translateX(-40px);
     }
   }
+  .disappear-after-2 {
+    animation: fade-in-left-key 0.5s ease 2s;
+  }
+  @keyframes disappear-after-key {
+    100% {
+      opacity: 0;
+    }
+  }
   .fade-in-right {
     animation: fade-in-right-key 0.5s ease;
   }
@@ -146,4 +154,8 @@ body {
   @apply bg;
   @apply dark:bg-dark;
   @apply transition-colors;
+}
+
+.ReactModal__Overlay.ReactModal__Overlay--after-open {
+  z-index: 9999;
 }

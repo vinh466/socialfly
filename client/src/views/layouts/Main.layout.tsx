@@ -17,13 +17,13 @@ export default function Root() {
     return (
         <div className="container mx-auto flex flex-row">
 
-            <div className="wrapper flex w-full h-full flex-col">
+            <div className="wrapper flex w-full h-full min-h-screen flex-col">
                 <div className="h-[64px]">
                     <div className="container fixed px-2 z-[999]">
                         <header id="header" className=" p-1 h-[64px] flex flex-row gap-2 justify-between items-center rounded-br-lg rounded-bl-lg dark:border-solid dark:border-b dark:border-slate-500 primary-bg dark:primary-bg-dark ">
 
                             <div id="header-logo" className="flex-1 max-w-[360px]">
-                                <img src="/public/socialfly-logo.png" className="block mx-auto" width={180} alt="logo" srcSet="socialfly-logo.png" />
+                                <img src="/socialfly-logo.png" className="block mx-auto" width={180} alt="logo" srcSet="socialfly-logo.png" />
                             </div>
                             <div className="flex-[3] flex mx-2 items-center">
                                 <div className="flex-[3]">
@@ -63,7 +63,7 @@ export default function Root() {
                                     <div className="flex items-center rounded-lg mb-2 primary-bg dark:primary-bg-dark">
                                         <div className="p-4">
                                             <Link className="" to={`/profile`}>
-                                                <img src={userInfo.avatar || '/public/no-avatar.png'} className="rounded-4xl" alt="avatar" width={50} height={50} />
+                                                <img src={userInfo.avatar || '/no-avatar.png'} className="w-16 h-16 object-cover rounded-4xl" alt="avatar" width={50} height={50} />
                                             </Link>
                                         </div>
                                         <div className="flex-1 flex flex-col p-2  ">
